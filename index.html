@@ -337,6 +337,7 @@
                         <button type="button" class="ws-seg-btn active" data-feed-filter="all" data-i18n="ws.pro_filter_all">كل المحافظات</button>
                         <button type="button" class="ws-seg-btn" data-feed-filter="city" data-i18n="ws.pro_filter_city">في محافظتي فقط</button>
                     </div>
+                    <div class="ws-specialty-banner" id="ws-pro-feed-specialty-badge" aria-live="polite"></div>
                 </div>
                 <div class="ws-orders-grid" id="ws-pro-feed-list"></div>
             </div>
@@ -361,31 +362,37 @@
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="ws-pro-job"><i class="fa-solid fa-briefcase" aria-hidden="true"></i> <span data-i18n="userprof.job_label">التخصص المهني</span></label>
-                            <input type="text" id="ws-pro-job" data-i18n-placeholder="userprof.job_placeholder" required>
+                            <label for="ws-pro-specialty"><i class="fa-solid fa-screwdriver-wrench" aria-hidden="true"></i> <span data-i18n="ws.pro_specialty_label">التخصص الرئيسي (يحدد الطلبات المعروضة لك)</span></label>
+                            <select id="ws-pro-specialty" required></select>
                         </div>
                         <div class="form-group">
-                            <label for="ws-pro-city"><i class="fa-solid fa-location-dot" aria-hidden="true"></i> <span data-i18n="auth.reg_city_label">المحافظة</span></label>
-                            <select id="ws-pro-city"></select>
+                            <label for="ws-pro-job"><i class="fa-solid fa-briefcase" aria-hidden="true"></i> <span data-i18n="userprof.job_label">التخصص المهني</span></label>
+                            <input type="text" id="ws-pro-job" data-i18n-placeholder="userprof.job_placeholder" required>
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
+                            <label for="ws-pro-city"><i class="fa-solid fa-location-dot" aria-hidden="true"></i> <span data-i18n="auth.reg_city_label">المحافظة</span></label>
+                            <select id="ws-pro-city"></select>
+                        </div>
+                        <div class="form-group">
                             <label for="ws-pro-price"><i class="fa-solid fa-coins" aria-hidden="true"></i> <span data-i18n="ws.pro_price_label">السعر الأساسي للزيارة (جنيه مصري)</span></label>
                             <input type="number" id="ws-pro-price" min="50" max="20000" step="10" required>
                         </div>
+                    </div>
+                    <div class="form-row">
                         <div class="form-group">
                             <label for="ws-pro-exp"><i class="fa-solid fa-business-time" aria-hidden="true"></i> <span data-i18n="ws.pro_exp_label">سنوات الخبرة</span></label>
                             <input type="text" id="ws-pro-exp" placeholder="مثال: 8 سنوات">
+                        </div>
+                        <div class="form-group">
+                            <label for="ws-pro-skills"><i class="fa-solid fa-list-check" aria-hidden="true"></i> <span data-i18n="ws.pro_skills_label">المهارات والتخصصات (افصل بفاصلة)</span></label>
+                            <input type="text" id="ws-pro-skills" placeholder="إصلاح شورت الكهرباء، تركيب لوحات التوزيع">
                         </div>
                     </div>
                     <div class="gov-rate-preview-box">
                         <span class="gov-rate-preview-title" data-i18n="ws.pro_gov_preview">معاينة سعرك تلقائياً حسب المحافظة:</span>
                         <div class="gov-rate-chips" id="ws-pro-gov-preview"></div>
-                    </div>
-                    <div class="form-group">
-                        <label for="ws-pro-skills"><i class="fa-solid fa-list-check" aria-hidden="true"></i> <span data-i18n="ws.pro_skills_label">المهارات والتخصصات (افصل بفاصلة)</span></label>
-                        <input type="text" id="ws-pro-skills" placeholder="إصلاح شورت الكهرباء، تركيب لوحات التوزيع">
                     </div>
                     <div class="form-group">
                         <label for="ws-pro-bio"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i> <span data-i18n="userprof.bio_label">نبذة شخصية</span></label>
@@ -770,6 +777,9 @@
                 <button class="filter-btn" data-filter="طنطا" role="tab" aria-selected="false" data-city-value="طنطا">طنطا</button>
                 <button class="filter-btn" data-filter="المنصورة" role="tab" aria-selected="false" data-city-value="المنصورة">المنصورة</button>
             </div>
+
+            <!-- Provider Specialty Filter -->
+            <div class="filter-pills specialty-filter-pills" id="providers-specialty-filter" role="tablist" aria-label="تصفية الفنيين حسب التخصص"></div>
         </div>
 
         <div class="providers-slider-wrapper">
@@ -1036,6 +1046,12 @@
                     </div>
                 </article>
             </div>
+        </div>
+
+        <div id="providers-empty-msg" class="no-results-msg hidden" role="status">
+            <i class="fa-solid fa-user-slash" aria-hidden="true"></i>
+            <p data-i18n="providers.empty_specialty">لا يوجد فنيون مسجلون حالياً في هذا التخصص والمحافظة المحددة.</p>
+            <button type="button" class="btn-primary-sm" id="reset-providers-filter-btn" data-i18n="providers.reset_filters">عرض جميع الفنيين</button>
         </div>
     </div>
 </section>
@@ -1579,6 +1595,11 @@
                 </select>
             </div>
 
+            <div class="form-group">
+                <label for="booking-provider-select"><i class="fa-solid fa-user-check" aria-hidden="true"></i> <span data-i18n="booking.provider_label">الفني المختص لهذا التخصص (اختياري)</span></label>
+                <select id="booking-provider-select"></select>
+            </div>
+
             <!-- Live Service Price Display Card -->
             <div class="booking-price-card" id="booking-price-card" aria-live="polite">
                 <div class="booking-price-top">
@@ -1720,6 +1741,16 @@
                         <option value="client" data-i18n="auth.reg_type_client">عميل (أبحث عن خدمات صيانة)</option>
                         <option value="provider" data-i18n="auth.reg_type_provider">مقدم خدمة (فني / مهندس صيانة)</option>
                     </select>
+                </div>
+                <div class="form-row hidden" id="reg-provider-fields">
+                    <div class="form-group">
+                        <label for="reg-specialty"><i class="fa-solid fa-screwdriver-wrench" aria-hidden="true"></i> <span data-i18n="auth.reg_specialty_label">التخصص المهني (تُعرض لك طلبات تخصصك فقط)</span></label>
+                        <select id="reg-specialty"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-job-title"><i class="fa-solid fa-briefcase" aria-hidden="true"></i> <span data-i18n="auth.reg_job_label">المسمى الوظيفي (اختياري)</span></label>
+                        <input type="text" id="reg-job-title" placeholder="مثال: فني صيانة منزلية شاملة" data-i18n-placeholder="auth.reg_job_placeholder">
+                    </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">

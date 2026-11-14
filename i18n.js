@@ -334,7 +334,21 @@
 
             'banner.return_client': 'أنت تتصفح المنصة العامة — العودة إلى واجهة العميل',
             'banner.return_provider': 'أنت تتصفح المنصة العامة — العودة إلى واجهة مقدم الخدمة',
-            'banner.return_btn': 'فتح واجهتي الخاصة'
+            'banner.return_btn': 'فتح واجهتي الخاصة',
+
+            'services.view_pros': 'فنيو التخصص',
+            'providers.specialty_label': 'تصفية حسب التخصص:',
+            'providers.specialty_all': 'جميع التخصصات',
+            'providers.empty_specialty': 'لا يوجد فنيون مسجلون حالياً في هذا التخصص والمحافظة المحددة.',
+            'providers.reset_filters': 'عرض جميع الفنيين',
+            'booking.provider_label': 'الفني المختص لهذا التخصص (اختياري)',
+            'booking.provider_auto': 'توجيه تلقائي لأقرب فني متاح في هذا التخصص',
+            'booking.provider_none': 'سيتم التوجيه تلقائياً لأقرب فني معتمد',
+            'auth.reg_specialty_label': 'التخصص المهني (تُعرض لك طلبات تخصصك فقط)',
+            'auth.reg_job_label': 'المسمى الوظيفي (اختياري)',
+            'auth.reg_job_placeholder': 'مثال: فني صيانة منزلية شاملة',
+            'ws.pro_specialty_label': 'التخصص الرئيسي (يحدد الطلبات المعروضة لك)',
+            'ws.pro_specialty_badge_prefix': 'طلبات تخصصك فقط:'
         },
         en: {
             'meta.title': 'Fixora | Trusted Home Services Marketplace in Egypt',
@@ -665,9 +679,38 @@
 
             'banner.return_client': 'Viewing Public Marketplace — Return to Customer Workspace',
             'banner.return_provider': 'Viewing Public Marketplace — Return to Provider Workspace',
-            'banner.return_btn': 'Open My Workspace'
+            'banner.return_btn': 'Open My Workspace',
+
+            'services.view_pros': 'Specialists',
+            'providers.specialty_label': 'Filter by specialty:',
+            'providers.specialty_all': 'All Specialties',
+            'providers.empty_specialty': 'No technicians currently match this specialty and governorate filter.',
+            'providers.reset_filters': 'Show All Technicians',
+            'booking.provider_label': 'Specialist for This Service (Optional)',
+            'booking.provider_auto': 'Auto-assign nearest available specialist',
+            'booking.provider_none': 'Auto-dispatch to nearest certified pro',
+            'auth.reg_specialty_label': 'Primary Specialty (Only matching requests appear)',
+            'auth.reg_job_label': 'Job Title (Optional)',
+            'auth.reg_job_placeholder': 'e.g., Home Maintenance Technician',
+            'ws.pro_specialty_label': 'Primary Specialty (Filters your request feed)',
+            'ws.pro_specialty_badge_prefix': 'Your specialty only:'
         }
     };
+
+    const SPECIALTIES = [
+        { key: 'كهرباء', nameAr: 'كهرباء', nameEn: 'Electrical', keywords: ['كهرباء', 'كهربائي', 'كهربا', 'electric'] },
+        { key: 'سباكة', nameAr: 'سباكة', nameEn: 'Plumbing', keywords: ['سباكة', 'سباك', 'خلاطات', 'تسربات', 'plumb'] },
+        { key: 'تكييف وتبريد', nameAr: 'تكييف وتبريد', nameEn: 'AC & Cooling', keywords: ['تكييف', 'تبريد', 'فريون', 'hvac', 'cooling'] },
+        { key: 'نجارة وأثاث', nameAr: 'نجارة وأثاث', nameEn: 'Carpentry & Furniture', keywords: ['نجارة', 'نجار', 'أثاث', 'اثاث', 'خشب', 'carpent'] },
+        { key: 'دهانات وديكور', nameAr: 'دهانات وديكور', nameEn: 'Painting & Decor', keywords: ['دهانات', 'دهان', 'نقاش', 'ديكور', 'تشطيبات', 'paint'] },
+        { key: 'تنظيف المنازل', nameAr: 'تنظيف المنازل', nameEn: 'Home Cleaning', keywords: ['تنظيف', 'نظافة', 'بخار', 'clean'] },
+        { key: 'ألوميتال وزجاج', nameAr: 'ألوميتال وزجاج', nameEn: 'Aluminum & Glass', keywords: ['ألوميتال', 'الوميتال', 'زجاج', 'alumin'] },
+        { key: 'كاميرات مراقبة', nameAr: 'كاميرات مراقبة', nameEn: 'CCTV & Security', keywords: ['كاميرات', 'كاميرا', 'مراقبة', 'أنظمة أمنية', 'cctv'] },
+        { key: 'شبكات وإنترنت', nameAr: 'شبكات وإنترنت', nameEn: 'Wi-Fi & Networking', keywords: ['شبكات', 'شبكة', 'إنترنت', 'انترنت', 'راوتر', 'واي فاي', 'wifi', 'network'] },
+        { key: 'مفاتيح وأقفال طوارئ', nameAr: 'مفاتيح وأقفال طوارئ', nameEn: 'Emergency Locksmith', keywords: ['مفاتيح وأقفال', 'أقفال', 'اقفال', 'كالون', 'locksmith', 'lock'] },
+        { key: 'مكافحة الحشرات', nameAr: 'مكافحة الحشرات', nameEn: 'Pest Control', keywords: ['مكافحة الحشرات', 'حشرات', 'إبادة', 'pest'] },
+        { key: 'صيانة منزلية شاملة', nameAr: 'صيانة منزلية شاملة', nameEn: 'Home Maintenance & Appliances', keywords: ['صيانة منزلية', 'صيانة شاملة', 'صيانة عامة', 'أجهزة منزلية', 'فني صيانة', 'home maintenance', 'appliance', 'handyman'] }
+    ];
 
     const GOVERNORATES = [
         { key: 'القاهرة', nameAr: 'القاهرة', nameEn: 'Cairo', multiplier: 1.0, deltaPercent: 0, badgeAr: 'السعر الأساسي', badgeEn: 'Base Rate' },
@@ -807,6 +850,38 @@
             exp: '10 years',
             bio: 'Locksmith specializing in damage-free unlocking, smart lock installation, and 24-hour emergency callouts.',
             skills: ['Damage-free unlock', 'Smart locks', 'Cylinder replacement', 'Key programming']
+        },
+        'ياسر منصور': {
+            name: 'Yasser Mansour',
+            job: 'Steam & Deep Home Cleaning Specialist',
+            location: 'Cairo — Heliopolis & Rehab',
+            exp: '6 years',
+            bio: 'Specialist in deep cleaning for apartments and villas, plus steam cleaning for carpets and upholstery.',
+            skills: ['Deep apartment clean', 'Steam carpet wash', 'Kitchen & bath sanitize', 'Post-renovation clean']
+        },
+        'وليد عبد الرحمن': {
+            name: 'Walid Abdelrahman',
+            job: 'Aluminum & Glass Windows Technician',
+            location: 'Giza — Haram & Faisal',
+            exp: '9 years',
+            bio: 'Technician specializing in aluminum windows, pleated screens, hinges, and tempered glass installation.',
+            skills: ['Aluminum window repair', 'Pleated screens', 'Rollers & hinges', 'Tempered glass']
+        },
+        'باسم عادل': {
+            name: 'Bassem Adel',
+            job: 'Home Wi-Fi & Networking Engineer',
+            location: 'Cairo — Maadi & Zamalek',
+            exp: '7 years',
+            bio: 'Networking engineer solving weak Wi-Fi coverage with Mesh systems, router tuning, and Cat6 cabling.',
+            skills: ['Cat6 cabling', 'Wi-Fi Mesh setup', 'Router tuning', 'Villa & office coverage']
+        },
+        'عادل السعيد': {
+            name: 'Adel El-Said',
+            job: 'Safe Pest Control Specialist',
+            location: 'Alexandria — Roshdy & Sidi Gaber',
+            exp: '8 years',
+            bio: 'Certified pest control expert using odorless Ministry-approved treatments with a 6-month warranty.',
+            skills: ['Odorless treatment', 'Ant & roach control', 'Rodent proofing', '6-month warranty']
         }
     };
 
@@ -964,9 +1039,42 @@
         return Math.max(50, Math.round(safeBase * gov.multiplier));
     }
 
+    function resolveSpecialty(input, fallbackSkills = []) {
+        const raw = String(input || '').trim();
+        if (raw) {
+            const lower = raw.toLowerCase();
+            const exact = SPECIALTIES.find(
+                (s) => s.key === raw || s.nameAr === raw || s.nameEn.toLowerCase() === lower
+            );
+            if (exact) return exact.key;
+            for (const s of SPECIALTIES) {
+                if (s.keywords.some((kw) => lower.includes(kw.toLowerCase()))) {
+                    return s.key;
+                }
+            }
+        }
+        if (Array.isArray(fallbackSkills)) {
+            for (const skill of fallbackSkills) {
+                const resolved = resolveSpecialty(skill, []);
+                if (resolved) return resolved;
+            }
+        }
+        return '';
+    }
+
+    function getProviderSpecialty(provider) {
+        if (!provider) return '';
+        const explicit = resolveSpecialty(provider.specialty || '');
+        if (explicit) return explicit;
+        const byJob = resolveSpecialty(provider.jobTitle || '');
+        if (byJob) return byJob;
+        return resolveSpecialty('', Array.isArray(provider.skills) ? provider.skills : []);
+    }
+
     global.FixoraI18n = {
         UI_STRINGS,
         GOVERNORATES,
+        SPECIALTIES,
         TICKERS_EN,
         TICKERS_AR,
         getLang,
@@ -977,6 +1085,8 @@
         translateProvider,
         translateReviewTag,
         getGovernoratePricing,
-        applyGovernoratePrice
+        applyGovernoratePrice,
+        resolveSpecialty,
+        getProviderSpecialty
     };
 })(window);

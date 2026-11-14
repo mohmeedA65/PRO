@@ -8,13 +8,15 @@ const {
   isValidEmail,
   sanitizeUser,
   createSession,
-  requireAuth
+  requireAuth,
+  resolveSpecialty,
+  doesRequestMatchProvider
 } = require('../utils');
 
 const router = express.Router();
 
 router.post('/register', (req, res) => {
-  const { fullname, phone, email, password, role, city, jobTitle } = req.body || {};
+  const { fullname, phone, email, password, role, city, jobTitle, specialty } = req.body || {};
 
   const cleanName = String(fullname || '').trim();
   const cleanEmail = String(email || '').trim().toLowerCase();
@@ -22,7 +24,13 @@ router.post('/register', (req, res) => {
   const cleanPassword = String(password || '');
   const cleanCity = city ? String(city).trim() : null;
   const cleanRole = String(role || 'CLIENT').toUpperCase() === 'PROVIDER' ? 'PROVIDER' : 'CLIENT';
-  const cleanJobTitle = jobTitle ? String(jobTitle).trim() : null;
+  const rawJobTitle = jobTitle ? String(jobTitle).trim().slice(0, 120) : '';
+  const cleanSpecialty = cleanRole === 'PROVIDER'
+    ? (resolveSpecialty(specialty || rawJobTitle) || 'صيانة منزلية شاملة')
+    : '';
+  const cleanJobTitle = cleanRole === 'PROVIDER'
+    ? (rawJobTitle || (cleanSpecialty === 'صيانة منزلية شاملة' ? 'فني صيانة منزلية شاملة' : `فني ${cleanSpecialty}`))
+    : (rawJobTitle || null);
 
   if (cleanName.length < 2) {
     return res.status(400).json({ error: 'يرجى إدخال الاسم بالكامل بشكل صحيح.' });
@@ -51,11 +59,40 @@ router.post('/register', (req, res) => {
 
   const result = db
     .prepare(
-      'INSERT INTO users (fullname, email, phone, password_hash, role, city, job_title, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+      'INSERT INTO users (fullname, email, phone, password_hash, role, city, job_title, specialty, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
     )
-    .run(cleanName, cleanEmail, cleanPhone, passwordHash, cleanRole, cleanCity, cleanJobTitle, status);
+    .run(cleanName, cleanEmail, cleanPhone, passwordHash, cleanRole, cleanCity, cleanJobTitle, cleanSpecialty, status);
 
   const userRow = db.prepare('SELECT * FROM users WHERE id = ?').get(result.lastInsertRowid);
+
+  if (cleanRole === 'PROVIDER') {
+    const serviceRow = db.prepare('SELECT base_price FROM services WHERE title = ?').get(cleanSpecialty);
+    const defaultPrice = serviceRow ? serviceRow.base_price : 200;
+    db.prepare('UPDATE users SET service_price = ? WHERE id = ?').run(defaultPrice, userRow.id);
+    userRow.service_price = defaultPrice;
+
+    const cityLabel = cleanCity || 'القاهرة';
+    db.prepare(
+      'INSERT INTO providers (user_id, fullname, job_title, specialty, city, location_text, avatar, experience, price, rating, reviews_count, is_available, bio, skills_json, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    ).run(
+      userRow.id,
+      cleanName,
+      cleanJobTitle,
+      cleanSpecialty,
+      cityLabel,
+      cityLabel,
+      'images/worker.webp',
+      '5 سنوات',
+      defaultPrice,
+      5.0,
+      1,
+      1,
+      cleanJobTitle,
+      JSON.stringify([cleanSpecialty]),
+      100
+    );
+  }
+
   const { token } = createSession(userRow.id);
 
   return res.status(201).json({
@@ -124,10 +161,11 @@ router.get('/profile', requireAuth, (req, res) => {
     const availableRequests = db
       .prepare(
         `SELECT * FROM service_requests
-         WHERE status = 'NEW' AND (provider_user_id IS NULL OR provider_user_id = ?)
-         ORDER BY CASE WHEN city = ? THEN 0 ELSE 1 END, id DESC LIMIT 50`
+         WHERE status = 'NEW'
+         ORDER BY CASE WHEN city = ? THEN 0 ELSE 1 END, id DESC LIMIT 100`
       )
-      .all(req.user.id, user.city || '')
+      .all(user.city || '')
+      .filter((row) => doesRequestMatchProvider(row, user))
       .map(mapRequestRow);
 
     const assignedRequests = db
@@ -211,7 +249,7 @@ router.get('/profile', requireAuth, (req, res) => {
 });
 
 router.patch('/profile', requireAuth, (req, res) => {
-  const { fullname, phone, city, address, bio, jobTitle, isAvailable, servicePrice, experience, skills } = req.body || {};
+  const { fullname, phone, city, address, bio, jobTitle, specialty, isAvailable, servicePrice, experience, skills } = req.body || {};
 
   const current = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
   if (!current) {
@@ -226,6 +264,15 @@ router.patch('/profile', requireAuth, (req, res) => {
   const cleanJobTitle = current.role === 'PROVIDER' && jobTitle !== undefined
     ? (String(jobTitle).trim().slice(0, 120) || current.job_title)
     : current.job_title;
+
+  let cleanSpecialty = current.specialty || '';
+  if (current.role === 'PROVIDER') {
+    if (specialty !== undefined) {
+      cleanSpecialty = resolveSpecialty(specialty) || String(specialty).trim().slice(0, 80) || resolveSpecialty(cleanJobTitle || '') || 'صيانة منزلية شاملة';
+    } else if (!cleanSpecialty || jobTitle !== undefined) {
+      cleanSpecialty = resolveSpecialty(cleanJobTitle || '') || cleanSpecialty || 'صيانة منزلية شاملة';
+    }
+  }
 
   const cleanAvailable = current.role === 'PROVIDER' && isAvailable !== undefined
     ? (isAvailable ? 1 : 0)
@@ -267,16 +314,36 @@ router.patch('/profile', requireAuth, (req, res) => {
   }
 
   db.prepare(
-    'UPDATE users SET fullname = ?, phone = ?, city = ?, address = ?, bio = ?, job_title = ?, is_available = ?, service_price = ?, experience = ?, skills_json = ? WHERE id = ?'
-  ).run(cleanName, cleanPhone, cleanCity, cleanAddress, cleanBio, cleanJobTitle, cleanAvailable, cleanPrice, cleanExperience, cleanSkillsJson, req.user.id);
+    'UPDATE users SET fullname = ?, phone = ?, city = ?, address = ?, bio = ?, job_title = ?, specialty = ?, is_available = ?, service_price = ?, experience = ?, skills_json = ? WHERE id = ?'
+  ).run(cleanName, cleanPhone, cleanCity, cleanAddress, cleanBio, cleanJobTitle, cleanSpecialty, cleanAvailable, cleanPrice, cleanExperience, cleanSkillsJson, req.user.id);
 
   if (current.role === 'PROVIDER') {
     const linkedProvider = db.prepare('SELECT id FROM providers WHERE user_id = ?').get(req.user.id);
+    const locText = cleanAddress ? `${cleanCity || 'القاهرة'} — ${cleanAddress}` : (cleanCity || 'القاهرة');
     if (linkedProvider) {
-      const locText = cleanAddress ? `${cleanCity || 'القاهرة'} — ${cleanAddress}` : (cleanCity || 'القاهرة');
       db.prepare(
-        'UPDATE providers SET fullname = ?, job_title = ?, city = ?, location_text = ?, price = ?, is_available = ?, bio = ?, experience = ?, skills_json = ? WHERE user_id = ?'
-      ).run(cleanName, cleanJobTitle || 'فني صيانة منزلية', cleanCity || 'القاهرة', locText, cleanPrice, cleanAvailable, cleanBio, cleanExperience, cleanSkillsJson, req.user.id);
+        'UPDATE providers SET fullname = ?, job_title = ?, specialty = ?, city = ?, location_text = ?, price = ?, is_available = ?, bio = ?, experience = ?, skills_json = ? WHERE user_id = ?'
+      ).run(cleanName, cleanJobTitle || 'فني صيانة منزلية', cleanSpecialty, cleanCity || 'القاهرة', locText, cleanPrice, cleanAvailable, cleanBio, cleanExperience, cleanSkillsJson, req.user.id);
+    } else {
+      db.prepare(
+        'INSERT INTO providers (user_id, fullname, job_title, specialty, city, location_text, avatar, experience, price, rating, reviews_count, is_available, bio, skills_json, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+      ).run(
+        req.user.id,
+        cleanName,
+        cleanJobTitle || 'فني صيانة منزلية',
+        cleanSpecialty,
+        cleanCity || 'القاهرة',
+        locText,
+        'images/worker.webp',
+        cleanExperience,
+        cleanPrice,
+        5.0,
+        1,
+        cleanAvailable,
+        cleanBio,
+        cleanSkillsJson,
+        100
+      );
     }
   }
 

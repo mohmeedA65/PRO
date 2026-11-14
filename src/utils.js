@@ -71,6 +71,153 @@ function applyGovernoratePrice(basePrice, city) {
   return Math.max(50, Math.round(safeBase * gov.multiplier));
 }
 
+const SPECIALTIES = [
+  {
+    key: 'كهرباء',
+    nameAr: 'كهرباء',
+    nameEn: 'Electrical',
+    keywords: ['كهرباء', 'كهربائي', 'كهربا', 'لوحات التوزيع', 'electric', 'electrical']
+  },
+  {
+    key: 'سباكة',
+    nameAr: 'سباكة',
+    nameEn: 'Plumbing',
+    keywords: ['سباكة', 'سباك', 'خلاطات', 'تسربات', 'صرف صحي', 'plumb', 'plumbing']
+  },
+  {
+    key: 'تكييف وتبريد',
+    nameAr: 'تكييف وتبريد',
+    nameEn: 'AC & Cooling',
+    keywords: ['تكييف', 'تبريد', 'فريون', 'مكيف', 'سبليت', 'hvac', 'cooling', 'air conditioning']
+  },
+  {
+    key: 'نجارة وأثاث',
+    nameAr: 'نجارة وأثاث',
+    nameEn: 'Carpentry & Furniture',
+    keywords: ['نجارة', 'نجار', 'أثاث', 'اثاث', 'خشب', 'غرف النوم', 'carpent', 'furniture']
+  },
+  {
+    key: 'دهانات وديكور',
+    nameAr: 'دهانات وديكور',
+    nameEn: 'Painting & Decor',
+    keywords: ['دهانات', 'دهان', 'نقاش', 'ديكور', 'ورق حائط', 'تشطيبات', 'paint', 'decor']
+  },
+  {
+    key: 'تنظيف المنازل',
+    nameAr: 'تنظيف المنازل',
+    nameEn: 'Home Cleaning',
+    keywords: ['تنظيف', 'نظافة', 'بخار', 'cleaning', 'clean']
+  },
+  {
+    key: 'ألوميتال وزجاج',
+    nameAr: 'ألوميتال وزجاج',
+    nameEn: 'Aluminum & Glass',
+    keywords: ['ألوميتال', 'الوميتال', 'زجاج', 'aluminum', 'aluminium', 'glass']
+  },
+  {
+    key: 'كاميرات مراقبة',
+    nameAr: 'كاميرات مراقبة',
+    nameEn: 'CCTV & Security',
+    keywords: ['كاميرات', 'كاميرا', 'مراقبة', 'أنظمة أمنية', 'انظمة امنية', 'انذار', 'cctv', 'security']
+  },
+  {
+    key: 'شبكات وإنترنت',
+    nameAr: 'شبكات وإنترنت',
+    nameEn: 'Wi-Fi & Networking',
+    keywords: ['شبكات', 'شبكة', 'إنترنت', 'انترنت', 'راوتر', 'واي فاي', 'wifi', 'wi-fi', 'network']
+  },
+  {
+    key: 'مفاتيح وأقفال طوارئ',
+    nameAr: 'مفاتيح وأقفال طوارئ',
+    nameEn: 'Emergency Locksmith',
+    keywords: ['مفاتيح وأقفال', 'أقفال', 'اقفال', 'كالون', 'كوالين', 'فتح الأبواب', 'locksmith', 'lock']
+  },
+  {
+    key: 'مكافحة الحشرات',
+    nameAr: 'مكافحة الحشرات',
+    nameEn: 'Pest Control',
+    keywords: ['مكافحة الحشرات', 'حشرات', 'حشرة', 'إبادة', 'قوارض', 'pest']
+  },
+  {
+    key: 'صيانة منزلية شاملة',
+    nameAr: 'صيانة منزلية شاملة',
+    nameEn: 'Home Maintenance & Appliances',
+    keywords: ['صيانة منزلية', 'صيانة شاملة', 'صيانة عامة', 'أجهزة منزلية', 'اجهزة منزلية', 'فني صيانة', 'full home', 'home maintenance', 'appliance', 'handyman']
+  }
+];
+
+function resolveSpecialty(input, fallbackSkills = []) {
+  const raw = String(input || '').trim();
+  if (raw) {
+    const lower = raw.toLowerCase();
+    const exact = SPECIALTIES.find(
+      (s) => s.key === raw || s.nameAr === raw || s.nameEn.toLowerCase() === lower
+    );
+    if (exact) return exact.key;
+
+    for (const s of SPECIALTIES) {
+      if (s.keywords.some((kw) => lower.includes(kw.toLowerCase()))) {
+        return s.key;
+      }
+    }
+  }
+
+  if (Array.isArray(fallbackSkills)) {
+    for (const skill of fallbackSkills) {
+      const resolved = resolveSpecialty(skill, []);
+      if (resolved) return resolved;
+    }
+  }
+
+  return '';
+}
+
+function getProviderSpecialty(provider) {
+  if (!provider) return '';
+  const explicit = resolveSpecialty(provider.specialty || '');
+  if (explicit) return explicit;
+  const byJob = resolveSpecialty(provider.jobTitle || provider.job_title || '');
+  if (byJob) return byJob;
+  let skills = provider.skills;
+  if (!Array.isArray(skills) && provider.skills_json) {
+    try {
+      skills = JSON.parse(provider.skills_json);
+    } catch {
+      skills = [];
+    }
+  }
+  return resolveSpecialty('', Array.isArray(skills) ? skills : []);
+}
+
+function doesProviderMatchSpecialty(provider, specialtyFilter) {
+  const filterVal = String(specialtyFilter || '').trim();
+  if (!filterVal || filterVal === 'all') return true;
+  const target = resolveSpecialty(filterVal) || filterVal;
+  const providerSpec = getProviderSpecialty(provider);
+  if (providerSpec && providerSpec === target) return true;
+  const job = String(provider?.jobTitle || provider?.job_title || '').toLowerCase();
+  return job.includes(target.toLowerCase());
+}
+
+function doesRequestMatchProvider(request, provider) {
+  if (!request || !provider) return false;
+  const providerId = provider.id != null ? Number(provider.id) : null;
+  const reqProviderUserId = request.providerUserId != null
+    ? Number(request.providerUserId)
+    : (request.provider_user_id != null ? Number(request.provider_user_id) : null);
+  const reqProviderName = String(request.providerName || request.provider_name || '').trim();
+  const providerName = String(provider.fullname || '').trim();
+
+  if (providerId && reqProviderUserId === providerId) return true;
+  if (!reqProviderUserId && reqProviderName && providerName && reqProviderName === providerName) return true;
+  if (reqProviderUserId || reqProviderName) return false;
+
+  const providerSpec = getProviderSpecialty(provider);
+  const requestSpec = resolveSpecialty(request.serviceTitle || request.service_title || '');
+  if (!providerSpec || !requestSpec) return false;
+  return providerSpec === requestSpec;
+}
+
 function sanitizeUser(row) {
   if (!row) return null;
   let skills = [];
@@ -82,6 +229,10 @@ function sanitizeUser(row) {
       skills = [];
     }
   }
+  const jobTitle = row.job_title || null;
+  const specialty = row.role === 'PROVIDER'
+    ? (resolveSpecialty(row.specialty || '') || resolveSpecialty(jobTitle || '', skills) || 'صيانة منزلية شاملة')
+    : (row.specialty || '');
   return {
     id: row.id,
     fullname: row.fullname,
@@ -89,7 +240,8 @@ function sanitizeUser(row) {
     phone: row.phone,
     role: row.role,
     city: row.city || null,
-    jobTitle: row.job_title || null,
+    jobTitle,
+    specialty,
     address: row.address || '',
     bio: row.bio || '',
     isAvailable: row.is_available === undefined ? true : Boolean(row.is_available),
@@ -221,8 +373,13 @@ function resolveBookingPrice({ serviceBasePrice, providerPrice, city, promoCode 
 
 module.exports = {
   GOVERNORATES,
+  SPECIALTIES,
   getGovernoratePricing,
   applyGovernoratePrice,
+  resolveSpecialty,
+  getProviderSpecialty,
+  doesProviderMatchSpecialty,
+  doesRequestMatchProvider,
   hashPassword,
   verifyPassword,
   normalizePhone,

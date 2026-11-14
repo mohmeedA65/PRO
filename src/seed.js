@@ -103,6 +103,7 @@ const INITIAL_PROVIDERS = [
   {
     fullname: 'محمد أحمد',
     job_title: 'كهربائي منازل ومصانع',
+    specialty: 'كهرباء',
     city: 'القاهرة',
     location_text: 'القاهرة — المعادي ومدينة نصر',
     avatar: 'images/provider-1.webp',
@@ -118,6 +119,7 @@ const INITIAL_PROVIDERS = [
   {
     fullname: 'أحمد علي',
     job_title: 'سباك صحي وخلاطات',
+    specialty: 'سباكة',
     city: 'الجيزة',
     location_text: 'الجيزة — الدقي والمهندسين',
     avatar: 'images/provider-2.webp',
@@ -133,6 +135,7 @@ const INITIAL_PROVIDERS = [
   {
     fullname: 'محمود حسن',
     job_title: 'نجار تركيب وصيانة أثاث',
+    specialty: 'نجارة وأثاث',
     city: 'الإسكندرية',
     location_text: 'الإسكندرية — سموحة والمنتزه',
     avatar: 'images/provider-3.webp',
@@ -148,6 +151,7 @@ const INITIAL_PROVIDERS = [
   {
     fullname: 'كريم إبراهيم',
     job_title: 'مهندس تكييفات وشحن فريون',
+    specialty: 'تكييف وتبريد',
     city: 'القاهرة',
     location_text: 'القاهرة — التجمع الخامس',
     avatar: 'images/provider-4.webp',
@@ -163,6 +167,7 @@ const INITIAL_PROVIDERS = [
   {
     fullname: 'مصطفى الشريف',
     job_title: 'مهندس دهانات وتشطيبات',
+    specialty: 'دهانات وديكور',
     city: 'الجيزة',
     location_text: 'الجيزة — 6 أكتوبر والشيخ زايد',
     avatar: 'images/provider-5.webp',
@@ -177,7 +182,8 @@ const INITIAL_PROVIDERS = [
   },
   {
     fullname: 'سامح فاروق',
-    job_title: 'فني صيانة أجهزة منزلية',
+    job_title: 'فني صيانة منزلية وأجهزة',
+    specialty: 'صيانة منزلية شاملة',
     city: 'الإسكندرية',
     location_text: 'الإسكندرية — ميامي ومحرم بك',
     avatar: 'images/provider-6.webp',
@@ -185,14 +191,15 @@ const INITIAL_PROVIDERS = [
     price: 250,
     rating: 4.7,
     reviews_count: 189,
-    is_available: 0,
-    bio: 'فني صيانة معتمد للغسالات الأوتوماتيك والثلاجات والبوتاجازات في المنزل بقطع غيار أصلية وضمان معتمد.',
-    skills: ['صيانة غسالات أوتوماتيك', 'صيانة ثلاجات نوفروست', 'إصلاح بوتاجازات وأفران', 'فحص منزلي شامل'],
+    is_available: 1,
+    bio: 'فني صيانة منزلية شاملة معتمد للأعطال المنزلية المتنوعة والغسالات الأوتوماتيك والثلاجات والبوتاجازات في زيارة واحدة متكاملة.',
+    skills: ['صيانة منزلية شاملة', 'صيانة غسالات أوتوماتيك', 'صيانة ثلاجات نوفروست', 'إصلاح بوتاجازات وأفران'],
     sort_order: 6
   },
   {
     fullname: 'طارق سعيد',
     job_title: 'مهندس كاميرات مراقبة وأنظمة أمنية',
+    specialty: 'كاميرات مراقبة',
     city: 'طنطا',
     location_text: 'طنطا — شارع البحر والجيلاني',
     avatar: 'images/provider-7.webp',
@@ -201,13 +208,14 @@ const INITIAL_PROVIDERS = [
     rating: 4.9,
     reviews_count: 165,
     is_available: 1,
-    bio: 'مهندس أنظمة أمنية وكاميرات مراقبة للمنازل والمحلات مع برمجة المتابعة المباشرة من الهاتف وتمديد شبكات الإنترنت.',
-    skills: ['تركيب كاميرات Hikvision', 'ربط الكاميرات بالموبايل', 'تمديد شبكات Wi-Fi', 'أنظمة إنذار وإنتركم'],
+    bio: 'مهندس أنظمة أمنية وكاميرات مراقبة للمنازل والمحلات مع برمجة المتابعة المباشرة من الهاتف وتمديد شبكات المراقبة.',
+    skills: ['تركيب كاميرات Hikvision', 'ربط الكاميرات بالموبايل', 'أنظمة إنذار وإنتركم', 'صيانة أجهزة DVR'],
     sort_order: 7
   },
   {
     fullname: 'حسن رضوان',
     job_title: 'فني أقفال وطوارئ 24س',
+    specialty: 'مفاتيح وأقفال طوارئ',
     city: 'المنصورة',
     location_text: 'المنصورة — المشاية والجامعة',
     avatar: 'images/provider-8.webp',
@@ -219,6 +227,70 @@ const INITIAL_PROVIDERS = [
     bio: 'فني متخصص في فتح الأبواب المغلقة بدون تلف، تغيير الكوالين والأقفال الذكية، وخدمات الطوارئ السريعة على مدار الساعة.',
     skills: ['فتح أبواب مصفحة بدون كسر', 'تركيب أقفال ذكية', 'تغيير قلب كالون', 'نسخ وبرمجة مفاتيح'],
     sort_order: 8
+  },
+  {
+    fullname: 'ياسر منصور',
+    job_title: 'أخصائي تنظيف منازل بالبخار',
+    specialty: 'تنظيف المنازل',
+    city: 'القاهرة',
+    location_text: 'القاهرة — مصر الجديدة والرحاب',
+    avatar: 'images/worker.webp',
+    experience: '6 سنوات',
+    price: 350,
+    rating: 4.8,
+    reviews_count: 142,
+    is_available: 1,
+    bio: 'متخصص في التنظيف العميق للشقق والفلل وتنظيف السجاد والمفروشات بأجهزة البخار الحديثة ومواد آمنة.',
+    skills: ['تنظيف عميق للشقق', 'تنظيف بالبخار للسجاد', 'تعقيم المطابخ والحمامات', 'تنظيف ما بعد التشطيب'],
+    sort_order: 9
+  },
+  {
+    fullname: 'وليد عبد الرحمن',
+    job_title: 'فني ألوميتال وزجاج وشبابيك',
+    specialty: 'ألوميتال وزجاج',
+    city: 'الجيزة',
+    location_text: 'الجيزة — الهرم وفيصل',
+    avatar: 'images/provider-3.webp',
+    experience: '9 سنوات',
+    price: 250,
+    rating: 4.9,
+    reviews_count: 178,
+    is_available: 1,
+    bio: 'فني متخصص في صيانة وتركيب قطاعات الألوميتال، السلك البليسيه، المفصلات، والزجاج السيكوريت بدقة عالية.',
+    skills: ['صيانة شبابيك ألوميتال', 'تركيب سلك بليسيه', 'تغيير عجل ومفصلات', 'تركيب زجاج سيكوريت'],
+    sort_order: 10
+  },
+  {
+    fullname: 'باسم عادل',
+    job_title: 'مهندس شبكات وإنترنت وتقوية واي فاي',
+    specialty: 'شبكات وإنترنت',
+    city: 'القاهرة',
+    location_text: 'القاهرة — المعادي والزمالك',
+    avatar: 'images/provider-7.webp',
+    experience: '7 سنوات',
+    price: 250,
+    rating: 4.9,
+    reviews_count: 154,
+    is_available: 1,
+    bio: 'مهندس شبكات منزلية متخصص في حل مشاكل ضعف الواي فاي، إعداد أنظمة Mesh، وتمديد كابلات الشبكة الداخلية.',
+    skills: ['تمديد كابلات Cat6', 'إعداد أنظمة Wi-Fi Mesh', 'ضبط إعدادات الراوتر', 'تغطية الفلل والمكاتب'],
+    sort_order: 11
+  },
+  {
+    fullname: 'عادل السعيد',
+    job_title: 'أخصائي مكافحة حشرات وإبادة آمنة',
+    specialty: 'مكافحة الحشرات',
+    city: 'الإسكندرية',
+    location_text: 'الإسكندرية — رشدي وسيدي جابر',
+    avatar: 'images/provider-5.webp',
+    experience: '8 سنوات',
+    price: 450,
+    rating: 4.8,
+    reviews_count: 132,
+    is_available: 1,
+    bio: 'خبير في مكافحة الحشرات المنزلية والقوارض بمواد معتمدة من وزارة الصحة بدون رائحة وبضمان 6 أشهر.',
+    skills: ['إبادة الحشرات بدون رائحة', 'مكافحة النمل والصراصير', 'معالجة القوارض', 'ضمان 6 أشهر'],
+    sort_order: 12
   }
 ];
 
@@ -353,15 +425,23 @@ function seed(database = db) {
     }
   }
 
-  const providerCount = database.prepare('SELECT COUNT(*) AS cnt FROM providers').get().cnt;
-  if (providerCount === 0) {
-    const stmt = database.prepare(
-      'INSERT INTO providers (fullname, job_title, city, location_text, avatar, experience, price, rating, reviews_count, is_available, bio, skills_json, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-    );
-    for (const p of INITIAL_PROVIDERS) {
-      stmt.run(
+  const insertProviderStmt = database.prepare(
+    'INSERT INTO providers (fullname, job_title, specialty, city, location_text, avatar, experience, price, rating, reviews_count, is_available, bio, skills_json, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+  );
+  const updateProviderSeedStmt = database.prepare(
+    'UPDATE providers SET price = ?, specialty = ? WHERE fullname = ? AND user_id IS NULL'
+  );
+  const ensureProviderSpecialtyStmt = database.prepare(
+    "UPDATE providers SET specialty = ? WHERE fullname = ? AND (specialty IS NULL OR specialty = '')"
+  );
+
+  for (const p of INITIAL_PROVIDERS) {
+    const existingProv = database.prepare('SELECT id FROM providers WHERE fullname = ?').get(p.fullname);
+    if (!existingProv) {
+      insertProviderStmt.run(
         p.fullname,
         p.job_title,
+        p.specialty,
         p.city,
         p.location_text,
         p.avatar,
@@ -374,11 +454,9 @@ function seed(database = db) {
         JSON.stringify(p.skills),
         p.sort_order
       );
-    }
-  } else {
-    const updateProviderPrice = database.prepare('UPDATE providers SET price = ? WHERE fullname = ? AND user_id IS NULL');
-    for (const p of INITIAL_PROVIDERS) {
-      updateProviderPrice.run(p.price, p.fullname);
+    } else {
+      updateProviderSeedStmt.run(p.price, p.specialty, p.fullname);
+      ensureProviderSpecialtyStmt.run(p.specialty, p.fullname);
     }
   }
 
@@ -419,7 +497,7 @@ function seed(database = db) {
   if (!demoProvider) {
     const providerRes = database
       .prepare(
-        'INSERT INTO users (fullname, email, phone, password_hash, role, city, job_title, address, bio, is_available, service_price, experience, skills_json, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+        'INSERT INTO users (fullname, email, phone, password_hash, role, city, job_title, specialty, address, bio, is_available, service_price, experience, skills_json, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
       )
       .run(
         'محمد أحمد',
@@ -429,6 +507,7 @@ function seed(database = db) {
         'PROVIDER',
         'القاهرة',
         'كهربائي منازل ومصانع',
+        'كهرباء',
         'مدينة نصر، القاهرة',
         'فني كهرباء معتمد خبرة أكثر من 8 سنوات في كافة أعمال تأسيس وتصليح الأعطال المنزلية.',
         1,
@@ -438,6 +517,10 @@ function seed(database = db) {
         'ACTIVE'
       );
     demoProvider = { id: Number(providerRes.lastInsertRowid) };
+  } else {
+    database
+      .prepare("UPDATE users SET specialty = 'كهرباء' WHERE id = ? AND (specialty IS NULL OR specialty = '')")
+      .run(demoProvider.id);
   }
 
   database
@@ -445,10 +528,11 @@ function seed(database = db) {
     .run(demoProvider.id, 'محمد أحمد');
 
   const reqCount = database.prepare('SELECT COUNT(*) AS cnt FROM service_requests').get().cnt;
+  const insertReq = database.prepare(
+    'INSERT INTO service_requests (user_id, provider_user_id, client_name, client_phone, client_email, service_title, provider_name, city, address, scheduled_at, notes, estimated_price, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+  );
+
   if (reqCount === 0) {
-    const insertReq = database.prepare(
-      'INSERT INTO service_requests (user_id, provider_user_id, client_name, client_phone, client_email, service_title, provider_name, city, address, scheduled_at, notes, estimated_price, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-    );
     insertReq.run(
       demoClient.id,
       null,
@@ -470,13 +554,13 @@ function seed(database = db) {
       'سارة أحمد',
       '01011112222',
       'client@fixora.eg',
-      'سباكة',
+      'كهرباء',
       'محمد أحمد',
       'الجيزة',
       'الدقي، شارع التحرير، عمارة 7',
       '2026-11-17T14:00',
-      'تركيب خلاط مطبخ وفحص وصلات السخان',
-      231,
+      'تركيب قواطع ولوحة كهرباء الشقة بالكامل',
+      210,
       'PENDING'
     );
     insertReq.run(
@@ -494,6 +578,84 @@ function seed(database = db) {
       280,
       'NEW'
     );
+    insertReq.run(
+      null,
+      null,
+      'أمل عبد الرحمن',
+      '01022334455',
+      null,
+      'صيانة منزلية شاملة',
+      null,
+      'الإسكندرية',
+      'سموحة، شارع فوزي معاذ',
+      '2026-11-19T13:00',
+      'صيانة شاملة لمفصلات الأبواب وفحص الغسالة والأجهزة المنزلية',
+      238,
+      'NEW'
+    );
+    insertReq.run(
+      null,
+      null,
+      'كريم منصور',
+      '01055667788',
+      null,
+      'سباكة',
+      null,
+      'الجيزة',
+      'المهندسين، شارع جامعة الدول العربية',
+      '2026-11-19T16:00',
+      'تغيير خلاط حوض المطبخ وكشف تسريب المياه',
+      231,
+      'NEW'
+    );
+  } else {
+    database
+      .prepare(
+        "UPDATE service_requests SET service_title = 'كهرباء', notes = 'تركيب قواطع ولوحة كهرباء الشقة بالكامل' WHERE provider_user_id = ? AND service_title = 'سباكة'"
+      )
+      .run(demoProvider.id);
+
+    const hasHomeMaintReq = database
+      .prepare("SELECT id FROM service_requests WHERE service_title = 'صيانة منزلية شاملة' LIMIT 1")
+      .get();
+    if (!hasHomeMaintReq) {
+      insertReq.run(
+        null,
+        null,
+        'أمل عبد الرحمن',
+        '01022334455',
+        null,
+        'صيانة منزلية شاملة',
+        null,
+        'الإسكندرية',
+        'سموحة، شارع فوزي معاذ',
+        '2026-11-19T13:00',
+        'صيانة شاملة لمفصلات الأبواب وفحص الغسالة والأجهزة المنزلية',
+        238,
+        'NEW'
+      );
+    }
+
+    const hasPlumbNewReq = database
+      .prepare("SELECT id FROM service_requests WHERE service_title = 'سباكة' AND status = 'NEW' LIMIT 1")
+      .get();
+    if (!hasPlumbNewReq) {
+      insertReq.run(
+        null,
+        null,
+        'كريم منصور',
+        '01055667788',
+        null,
+        'سباكة',
+        null,
+        'الجيزة',
+        'المهندسين، شارع جامعة الدول العربية',
+        '2026-11-19T16:00',
+        'تغيير خلاط حوض المطبخ وكشف تسريب المياه',
+        231,
+        'NEW'
+      );
+    }
   }
 }
 

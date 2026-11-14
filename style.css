@@ -1378,6 +1378,10 @@ header.scrolled nav {
     padding: 0 10px;
 }
 
+.providers-slider-wrapper.hide-arrows .slider-arrow-btn {
+    display: none;
+}
+
 .slider-arrow-btn {
     position: absolute;
     top: 48%;
@@ -5161,4 +5165,94 @@ body.dark-mode .gov-rate-chip strong {
         font-size: 12px;
         gap: 6px;
     }
+}
+
+/* --------------------------------------------------------------------------
+   22. SPECIALTY MATCHING: SERVICE ACTIONS, PROVIDER PILLS & FEED BADGE
+   -------------------------------------------------------------------------- */
+.service-card-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: auto;
+}
+
+.service-view-pros-btn {
+    background: var(--primary-light);
+    color: var(--primary);
+    border: 1px solid rgba(37, 99, 235, 0.22);
+    border-radius: var(--radius-full);
+    padding: 6px 12px;
+    font-size: 12.5px;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: var(--transition-fast);
+}
+
+.service-view-pros-btn:hover {
+    background: var(--primary);
+    color: var(--white);
+    border-color: var(--primary);
+}
+
+[dir="ltr"] .service-card:hover .service-request-btn i {
+    transform: translateX(6px);
+}
+
+.specialty-filter-pills {
+    margin-top: 12px;
+    gap: 8px;
+}
+
+.specialty-filter-pills .filter-btn {
+    padding: 8px 15px;
+    font-size: 13px;
+}
+
+#providers-empty-msg .btn-primary-sm {
+    margin-top: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.ws-specialty-banner {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 14px;
+    border-radius: 10px;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.28);
+    color: #059669;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.ws-specialty-banner strong {
+    font-weight: 900;
+}
+
+body.dark-mode .service-view-pros-btn {
+    background: rgba(59, 130, 246, 0.14);
+    border-color: rgba(59, 130, 246, 0.35);
+    color: #93c5fd;
+}
+
+body.dark-mode .service-view-pros-btn:hover {
+    background: var(--primary);
+    color: var(--white);
+}
+
+body.dark-mode .ws-specialty-banner {
+    background: rgba(16, 185, 129, 0.16);
+    border-color: rgba(52, 211, 153, 0.35);
+    color: #34d399;
 }

@@ -31,6 +31,7 @@ function createDatabase(dbPath) {
       role TEXT NOT NULL DEFAULT 'CLIENT',
       city TEXT,
       job_title TEXT,
+      specialty TEXT DEFAULT '',
       address TEXT DEFAULT '',
       bio TEXT DEFAULT '',
       is_available INTEGER NOT NULL DEFAULT 1,
@@ -64,6 +65,7 @@ function createDatabase(dbPath) {
       user_id INTEGER,
       fullname TEXT NOT NULL,
       job_title TEXT NOT NULL,
+      specialty TEXT DEFAULT '',
       city TEXT NOT NULL,
       location_text TEXT NOT NULL,
       avatar TEXT NOT NULL,
@@ -142,12 +144,14 @@ function createDatabase(dbPath) {
     }
   };
 
+  ensureColumn('users', 'specialty', "TEXT DEFAULT ''");
   ensureColumn('users', 'address', "TEXT DEFAULT ''");
   ensureColumn('users', 'bio', "TEXT DEFAULT ''");
   ensureColumn('users', 'is_available', 'INTEGER NOT NULL DEFAULT 1');
   ensureColumn('users', 'service_price', 'INTEGER NOT NULL DEFAULT 200');
   ensureColumn('users', 'experience', "TEXT DEFAULT '5 سنوات'");
   ensureColumn('users', 'skills_json', "TEXT DEFAULT '[]'");
+  ensureColumn('providers', 'specialty', "TEXT DEFAULT ''");
   ensureColumn('bookings', 'estimated_price', 'INTEGER NOT NULL DEFAULT 0');
   ensureColumn('service_requests', 'provider_name', 'TEXT');
   ensureColumn('service_requests', 'provider_user_id', 'INTEGER');

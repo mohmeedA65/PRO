@@ -2,8 +2,13 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const {
   GOVERNORATES,
+  SPECIALTIES,
   getGovernoratePricing,
   applyGovernoratePrice,
+  resolveSpecialty,
+  getProviderSpecialty,
+  doesProviderMatchSpecialty,
+  doesRequestMatchProvider,
   hashPassword,
   verifyPassword,
   normalizePhone,
@@ -124,22 +129,64 @@ test('seed populates services, providers, reviews, demo accounts, and syncs mark
   const demoPro = memDb.prepare("SELECT role FROM users WHERE email = 'pro@fixora.eg'").get();
 
   assert.equal(services, 12);
-  assert.equal(providers, 8);
+  assert.equal(providers, 12);
   assert.equal(reviews, 14);
   assert.equal(elec.base_price, 200);
   assert.equal(ac.base_price, 350);
   assert.equal(demoClient.role, 'CLIENT');
   assert.equal(demoPro.role, 'PROVIDER');
 
-  // Verify new columns exist for user profiles, provider settings, and estimated prices
+  // Verify new columns exist for user profiles, provider settings, specialties, and estimated prices
   const userCols = memDb.prepare('PRAGMA table_info(users)').all().map((c) => c.name);
+  const provCols = memDb.prepare('PRAGMA table_info(providers)').all().map((c) => c.name);
   const reqCols = memDb.prepare('PRAGMA table_info(service_requests)').all().map((c) => c.name);
   assert.ok(userCols.includes('address'));
   assert.ok(userCols.includes('bio'));
+  assert.ok(userCols.includes('specialty'));
   assert.ok(userCols.includes('is_available'));
   assert.ok(userCols.includes('service_price'));
+  assert.ok(provCols.includes('specialty'));
   assert.ok(reqCols.includes('estimated_price'));
   assert.ok(reqCols.includes('provider_name'));
   assert.ok(reqCols.includes('provider_user_id'));
+});
+
+test('resolveSpecialty and doesRequestMatchProvider isolate requests per provider specialty', () => {
+  assert.equal(SPECIALTIES.length, 12);
+  assert.equal(resolveSpecialty('كهربائي منازل ومصانع'), 'كهرباء');
+  assert.equal(resolveSpecialty('فني صيانة منزلية'), 'صيانة منزلية شاملة');
+  assert.equal(resolveSpecialty('فني صيانة أجهزة منزلية'), 'صيانة منزلية شاملة');
+  assert.equal(resolveSpecialty('مهندس تكييفات وشحن فريون'), 'تكييف وتبريد');
+
+  const electrician = { id: 10, fullname: 'محمد أحمد', specialty: 'كهرباء', jobTitle: 'كهربائي منازل ومصانع' };
+  const homeMaintPro = { id: 11, fullname: 'سامح فاروق', specialty: 'صيانة منزلية شاملة', jobTitle: 'فني صيانة منزلية' };
+
+  const elecReq = { id: 1, service_title: 'كهرباء', provider_user_id: null, provider_name: null };
+  const plumbReq = { id: 2, service_title: 'سباكة', provider_user_id: null, provider_name: null };
+  const homeMaintReq = { id: 3, service_title: 'صيانة منزلية شاملة', provider_user_id: null, provider_name: null };
+  const directForHomeMaint = { id: 4, service_title: 'كهرباء', provider_user_id: 11, provider_name: 'سامح فاروق' };
+
+  assert.equal(doesRequestMatchProvider(elecReq, electrician), true);
+  assert.equal(doesRequestMatchProvider(plumbReq, electrician), false);
+  assert.equal(doesRequestMatchProvider(homeMaintReq, electrician), false);
+
+  assert.equal(doesRequestMatchProvider(homeMaintReq, homeMaintPro), true);
+  assert.equal(doesRequestMatchProvider(elecReq, homeMaintPro), false);
+  assert.equal(doesRequestMatchProvider(plumbReq, homeMaintPro), false);
+  assert.equal(doesRequestMatchProvider(directForHomeMaint, homeMaintPro), true);
+  assert.equal(doesRequestMatchProvider(directForHomeMaint, electrician), false);
+});
+
+test('doesProviderMatchSpecialty filters providers accurately per specialty', () => {
+  const elecProv = { fullname: 'محمد أحمد', job_title: 'كهربائي منازل ومصانع', specialty: 'كهرباء' };
+  const plumbProv = { fullname: 'أحمد علي', job_title: 'سباك صحي وخلاطات', specialty: 'سباكة' };
+  const homeProv = { fullname: 'سامح فاروق', job_title: 'فني صيانة منزلية وأجهزة', specialty: 'صيانة منزلية شاملة' };
+
+  assert.equal(getProviderSpecialty(elecProv), 'كهرباء');
+  assert.equal(doesProviderMatchSpecialty(elecProv, 'كهرباء'), true);
+  assert.equal(doesProviderMatchSpecialty(elecProv, 'سباكة'), false);
+  assert.equal(doesProviderMatchSpecialty(plumbProv, 'سباكة'), true);
+  assert.equal(doesProviderMatchSpecialty(homeProv, 'صيانة منزلية شاملة'), true);
+  assert.equal(doesProviderMatchSpecialty(homeProv, 'all'), true);
 });
 

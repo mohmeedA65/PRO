@@ -27,6 +27,66 @@ document.addEventListener('DOMContentLoaded', () => {
     let clientOrderFilter = 'all';
     let activeProviderTab = 'ws-pro-feed';
     let providerFeedFilter = 'all';
+    let activeProviderSpecialty = 'all';
+
+    function getSpecialtyList() {
+        return (I18N && Array.isArray(I18N.SPECIALTIES)) ? I18N.SPECIALTIES : [];
+    }
+
+    function translateSpecialtyLabel(specKey) {
+        if (!specKey) return '';
+        const list = getSpecialtyList();
+        const found = list.find((s) => s.key === specKey);
+        if (found) return currentLang === 'en' ? found.nameEn : found.nameAr;
+        return I18N ? I18N.translateServiceTitle(specKey, currentLang) : specKey;
+    }
+
+    function resolveSpecialtyKey(input, skills = []) {
+        if (I18N && typeof I18N.resolveSpecialty === 'function') {
+            return I18N.resolveSpecialty(input, skills);
+        }
+        return String(input || '').trim();
+    }
+
+    function getProviderSpecKey(provider) {
+        if (I18N && typeof I18N.getProviderSpecialty === 'function') {
+            return I18N.getProviderSpecialty(provider);
+        }
+        return resolveSpecialtyKey((provider && (provider.specialty || provider.jobTitle)) || '', provider && provider.skills);
+    }
+
+    function populateSpecialtySelects() {
+        const list = getSpecialtyList();
+        if (!list.length) return;
+
+        ['reg-specialty', 'ws-pro-specialty'].forEach((id) => {
+            const sel = document.getElementById(id);
+            if (!sel) return;
+            const prev = sel.value;
+            sel.innerHTML = list
+                .map((s) => `<option value="${escapeHtml(s.key)}">${escapeHtml(currentLang === 'en' ? s.nameEn : s.nameAr)}</option>`)
+                .join('');
+            if (prev && list.some((s) => s.key === prev)) {
+                sel.value = prev;
+            } else if (list[0]) {
+                sel.value = list[0].key;
+            }
+        });
+
+        const filterWrap = document.getElementById('providers-specialty-filter');
+        if (filterWrap) {
+            const allLabel = t('providers.specialty_all');
+            const buttonsHtml = [
+                `<button type="button" class="filter-btn${activeProviderSpecialty === 'all' ? ' active' : ''}" data-specialty="all" role="tab" aria-selected="${activeProviderSpecialty === 'all' ? 'true' : 'false'}">${escapeHtml(allLabel)}</button>`,
+                ...list.map((s) => {
+                    const label = currentLang === 'en' ? s.nameEn : s.nameAr;
+                    const isActive = activeProviderSpecialty === s.key;
+                    return `<button type="button" class="filter-btn${isActive ? ' active' : ''}" data-specialty="${escapeHtml(s.key)}" role="tab" aria-selected="${isActive ? 'true' : 'false'}">${escapeHtml(label)}</button>`;
+                })
+            ];
+            filterWrap.innerHTML = buttonsHtml.join('');
+        }
+    }
 
     function getGovInfo(city) {
         if (I18N && typeof I18N.getGovernoratePricing === 'function') {
@@ -199,7 +259,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="service-icon ${serviceColors[index % serviceColors.length]}"><i class="${escapeHtml(service.iconClass)}" aria-hidden="true"></i></div>
                 <h3>${escapeHtml(localizedTitle)}</h3>
                 <p>${escapeHtml(localizedDesc)}</p>
-                <button class="service-request-btn" data-service="${escapeHtml(service.title)}">${escapeHtml(t('services.request_now'))} <i class="fa-solid ${arrowClass} dir-arrow" aria-hidden="true"></i></button>
+                <div class="service-card-actions">
+                    <button type="button" class="service-request-btn" data-service="${escapeHtml(service.title)}">${escapeHtml(t('services.request_now'))} <i class="fa-solid ${arrowClass} dir-arrow" aria-hidden="true"></i></button>
+                    <button type="button" class="service-view-pros-btn" data-service-specialty="${escapeHtml(service.title)}"><i class="fa-solid fa-user-check" aria-hidden="true"></i> ${escapeHtml(t('services.view_pros'))}</button>
+                </div>
             </div>`;
     }
 
@@ -214,12 +277,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const localized = I18N ? I18N.translateProvider(provider, currentLang) : provider;
         const skillsAttr = Array.isArray(localized.skills) ? localized.skills.join('|') : '';
         const priceLabel = `${price} ${t('providers.price_unit')}`;
+        const specKey = getProviderSpecKey(provider);
 
         return `
             <article class="provider-card reveal"
                 data-city="${escapeHtml(provider.city || '')}"
                 data-location="${escapeHtml(localized.location || provider.city || '')}"
                 data-status="${statusClass}"
+                data-specialty="${escapeHtml(specKey)}"
                 data-name="${escapeHtml(localized.fullname)}"
                 data-name-raw="${escapeHtml(provider.fullname)}"
                 data-job="${escapeHtml(localized.jobTitle || '')}"
@@ -315,7 +380,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (viewMore) viewMore.insertAdjacentHTML('beforebegin', html);
             else grid.insertAdjacentHTML('beforeend', html);
             observeReveals(grid);
-            filterProvidersByCity(activeProviderFilter);
+            filterProviders();
+        }
+        if (typeof populateBookingProviders === 'function') {
+            populateBookingProviders();
         }
     }
 
@@ -501,6 +569,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function initData() {
         populateGovernorateSelects();
+        populateSpecialtySelects();
         await Promise.allSettled([loadGovernorates(), loadServices(), loadProviders(), loadReviews(), loadSession()]);
     }
 
@@ -604,12 +673,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         populateGovernorateSelects();
+        populateSpecialtySelects();
         renderServices();
         renderProviders();
         renderReviews();
         setAuthUI(getCachedUser());
         tickerControls.forEach((ctrl) => ctrl.sync());
 
+        if (typeof populateBookingProviders === 'function') {
+            populateBookingProviders();
+        }
         if (typeof updateBookingPriceDisplay === 'function') {
             updateBookingPriceDisplay();
         }
@@ -957,7 +1030,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Providers Filter Tabs
+    // Providers Filter Tabs (City/Availability + Specialty)
     let activeProviderFilter = 'all';
     const providerFilterBtns = document.querySelectorAll('#providers-filter .filter-btn');
 
@@ -965,8 +1038,9 @@ document.addEventListener('DOMContentLoaded', () => {
         return document.querySelectorAll('#providers-grid .provider-card');
     }
 
-    function filterProvidersByCity(filterVal) {
+    function filterProviders({ filterVal = activeProviderFilter, specialty = activeProviderSpecialty } = {}) {
         activeProviderFilter = filterVal || 'all';
+        activeProviderSpecialty = specialty || 'all';
 
         providerFilterBtns.forEach(b => {
             const isActive = b.getAttribute('data-filter') === activeProviderFilter;
@@ -974,32 +1048,99 @@ document.addEventListener('DOMContentLoaded', () => {
             b.setAttribute('aria-selected', isActive ? 'true' : 'false');
         });
 
+        const specFilterWrap = document.getElementById('providers-specialty-filter');
+        if (specFilterWrap) {
+            specFilterWrap.querySelectorAll('.filter-btn').forEach(b => {
+                const isActive = b.getAttribute('data-specialty') === activeProviderSpecialty;
+                b.classList.toggle('active', isActive);
+                b.setAttribute('aria-selected', isActive ? 'true' : 'false');
+            });
+        }
+
+        let visibleCount = 0;
         getProviderCards().forEach(card => {
             if (card.classList.contains('view-more-card')) {
-                card.style.display = activeProviderFilter === 'all' ? '' : 'none';
+                card.style.display = (activeProviderFilter === 'all' && activeProviderSpecialty === 'all') ? '' : 'none';
                 return;
             }
             const status = card.getAttribute('data-status') || '';
             const city = card.getAttribute('data-city') || '';
+            const cardSpec = card.getAttribute('data-specialty') || resolveSpecialtyKey(card.getAttribute('data-job-raw') || card.getAttribute('data-job') || '');
 
+            let matchesCityOrStatus = false;
             if (activeProviderFilter === 'all') {
-                card.style.display = '';
+                matchesCityOrStatus = true;
             } else if (activeProviderFilter === 'online') {
-                card.style.display = status === 'online' ? '' : 'none';
-            } else if (city === activeProviderFilter || city.includes(activeProviderFilter)) {
+                matchesCityOrStatus = status === 'online';
+            } else {
+                matchesCityOrStatus = city === activeProviderFilter || city.includes(activeProviderFilter);
+            }
+
+            const matchesSpec = activeProviderSpecialty === 'all' || cardSpec === activeProviderSpecialty;
+
+            if (matchesCityOrStatus && matchesSpec) {
                 card.style.display = '';
+                visibleCount++;
             } else {
                 card.style.display = 'none';
             }
         });
+
+        const emptyMsg = document.getElementById('providers-empty-msg');
+        if (emptyMsg) {
+            emptyMsg.classList.toggle('hidden', visibleCount > 0);
+        }
+
+        const sliderWrapper = document.querySelector('.providers-slider-wrapper');
+        const sliderGrid = document.getElementById('providers-grid');
+        if (sliderWrapper && sliderGrid) {
+            const isExpanded = sliderGrid.classList.contains('grid-expanded');
+            sliderWrapper.classList.toggle('hide-arrows', isExpanded || visibleCount <= 1);
+            requestAnimationFrame(() => {
+                const noOverflow = sliderGrid.scrollWidth <= sliderGrid.clientWidth + 4;
+                sliderWrapper.classList.toggle('hide-arrows', isExpanded || visibleCount <= 1 || noOverflow);
+            });
+        }
+    }
+
+    function filterProvidersByCity(filterVal) {
+        filterProviders({ filterVal });
+    }
+
+    function scrollToProvidersBySpecialty(serviceTitle) {
+        const spec = resolveSpecialtyKey(serviceTitle);
+        filterProviders({ filterVal: 'all', specialty: spec || 'all' });
+        const providersSec = document.getElementById('providers');
+        if (providersSec) {
+            window.scrollTo({
+                top: Math.max(0, providersSec.offsetTop - 90),
+                behavior: 'smooth'
+            });
+        }
     }
 
     providerFilterBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             const filterVal = btn.getAttribute('data-filter');
-            filterProvidersByCity(filterVal);
+            filterProviders({ filterVal });
         });
     });
+
+    const providersSpecialtyFilterWrap = document.getElementById('providers-specialty-filter');
+    if (providersSpecialtyFilterWrap) {
+        providersSpecialtyFilterWrap.addEventListener('click', (e) => {
+            const btn = e.target.closest('.filter-btn[data-specialty]');
+            if (!btn) return;
+            filterProviders({ specialty: btn.getAttribute('data-specialty') || 'all' });
+        });
+    }
+
+    const resetProvidersFilterBtn = document.getElementById('reset-providers-filter-btn');
+    if (resetProvidersFilterBtn) {
+        resetProvidersFilterBtn.addEventListener('click', () => {
+            filterProviders({ filterVal: 'all', specialty: 'all' });
+        });
+    }
 
     // Provider Horizontal Slider Navigation Controls
     const providerSlider = document.getElementById('providers-grid');
@@ -1046,6 +1187,7 @@ document.addEventListener('DOMContentLoaded', () => {
        ========================================================= */
     const bookingForm = document.getElementById('booking-form');
     const bookingServiceSelect = document.getElementById('booking-service-select');
+    const bookingProviderSelect = document.getElementById('booking-provider-select');
     const bookingCitySelect = document.getElementById('booking-city');
     const bookingModalTitle = document.getElementById('booking-modal-title');
     const bookingPromoInput = document.getElementById('booking-promo-input');
@@ -1063,26 +1205,44 @@ document.addEventListener('DOMContentLoaded', () => {
     function resolveServiceTitle(rawName) {
         const text = String(rawName || '').trim();
         if (!text) return '';
-        const keywordMap = [
-            ['كهرب', 'كهرباء'],
-            ['سباك', 'سباكة'],
-            ['تكييف', 'تكييف وتبريد'],
-            ['نجار', 'نجارة وأثاث'],
-            ['دهان', 'دهانات وديكور'],
-            ['تنظيف', 'تنظيف المنازل'],
-            ['ألوميتال', 'ألوميتال وزجاج'],
-            ['كاميرا', 'كاميرات مراقبة'],
-            ['شبك', 'شبكات وإنترنت'],
-            ['أقفال', 'مفاتيح وأقفال طوارئ'],
-            ['مفاتيح', 'مفاتيح وأقفال طوارئ'],
-            ['حشر', 'مكافحة الحشرات'],
-            ['أجهزة', 'صيانة منزلية شاملة'],
-            ['شاملة', 'صيانة منزلية شاملة']
-        ];
-        for (const [stem, title] of keywordMap) {
-            if (text.includes(stem)) return title;
-        }
+        const viaI18n = resolveSpecialtyKey(text);
+        if (viaI18n) return viaI18n;
         return text;
+    }
+
+    function populateBookingProviders(serviceTitle = '', selectedProviderRawName = '') {
+        if (!bookingProviderSelect) return;
+        const targetService = serviceTitle || (bookingServiceSelect ? bookingServiceSelect.value : 'كهرباء');
+        const serviceSpec = resolveSpecialtyKey(targetService);
+        const activeCity = (bookingCitySelect && bookingCitySelect.value) ? bookingCitySelect.value : 'القاهرة';
+
+        const matching = cachedProviders.filter((p) => {
+            const pSpec = getProviderSpecKey(p);
+            return !serviceSpec || pSpec === serviceSpec;
+        });
+
+        const autoLabel = matching.length ? t('booking.provider_auto') : t('booking.provider_none');
+        const options = [`<option value="">${escapeHtml(autoLabel)}</option>`];
+
+        matching.forEach((p) => {
+            const localized = I18N ? I18N.translateProvider(p, currentLang) : p;
+            const cityLabel = I18N ? I18N.translateCity(p.city || '', currentLang) : (p.city || '');
+            const cityPrice = applyGovPrice(p.price || 200, activeCity);
+            const availTag = p.isAvailable !== false ? '🟢' : '🔴';
+            const label = `${localized.fullname} (${cityLabel}) — ${cityPrice} ${t('providers.price_unit')} ${availTag}`;
+            options.push(
+                `<option value="${escapeHtml(p.fullname)}" data-display-name="${escapeHtml(localized.fullname)}" data-price="${escapeHtml(p.price || 200)}">${escapeHtml(label)}</option>`
+            );
+        });
+
+        bookingProviderSelect.innerHTML = options.join('');
+
+        const wanted = selectedProviderRawName || pendingProviderName || '';
+        if (wanted && Array.from(bookingProviderSelect.options).some((o) => o.value === wanted)) {
+            bookingProviderSelect.value = wanted;
+        } else {
+            bookingProviderSelect.value = '';
+        }
     }
 
     function updateBookingPriceDisplay() {
@@ -1134,13 +1294,41 @@ document.addEventListener('DOMContentLoaded', () => {
                 pendingProviderBaseService = '';
                 if (bookingModalTitle) bookingModalTitle.textContent = t('booking.title');
             }
+            populateBookingProviders(bookingServiceSelect.value, '');
+            updateBookingPriceDisplay();
+        });
+    }
+
+    if (bookingProviderSelect) {
+        bookingProviderSelect.addEventListener('change', () => {
+            const opt = bookingProviderSelect.options[bookingProviderSelect.selectedIndex];
+            const rawName = bookingProviderSelect.value || '';
+            if (rawName && opt) {
+                pendingProviderName = rawName;
+                pendingProviderDisplayName = opt.getAttribute('data-display-name') || rawName;
+                pendingProviderPrice = Number(opt.getAttribute('data-price')) || null;
+                pendingProviderBaseService = bookingServiceSelect ? bookingServiceSelect.value : '';
+                if (bookingModalTitle) {
+                    bookingModalTitle.textContent = `${t('booking.title_provider')} ${pendingProviderDisplayName}`;
+                }
+            } else {
+                pendingProviderName = '';
+                pendingProviderDisplayName = '';
+                pendingProviderPrice = null;
+                pendingProviderBaseService = '';
+                if (bookingModalTitle) {
+                    bookingModalTitle.textContent = t('booking.title');
+                }
+            }
             updateBookingPriceDisplay();
         });
     }
 
     if (bookingCitySelect) {
         bookingCitySelect.addEventListener('change', () => {
+            const prevProvider = bookingProviderSelect ? bookingProviderSelect.value : pendingProviderName;
             populateBookingServices(cachedServices);
+            populateBookingProviders(bookingServiceSelect ? bookingServiceSelect.value : '', prevProvider);
             updateBookingPriceDisplay();
         });
     }
@@ -1185,6 +1373,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         pendingProviderBaseService = pendingProviderPrice && bookingServiceSelect ? bookingServiceSelect.value : '';
+        populateBookingProviders(bookingServiceSelect ? bookingServiceSelect.value : serviceName, pendingProviderName);
 
         if (bookingModalTitle) {
             bookingModalTitle.textContent = pendingProviderDisplayName
@@ -1229,16 +1418,23 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        const viewProsBtn = e.target.closest('.service-view-pros-btn');
+        if (viewProsBtn) {
+            scrollToProvidersBySpecialty(viewProsBtn.getAttribute('data-service-specialty') || '');
+            return;
+        }
+
         const bookBtn = e.target.closest('.direct-book-btn');
         if (bookBtn) {
             const card = bookBtn.closest('.provider-card');
             const rawPrice = card ? (card.getAttribute('data-price-num') || card.getAttribute('data-price') || '') : '';
             const numPrice = parseInt(String(rawPrice).replace(/[^0-9]/g, ''), 10) || null;
             triggerBooking(
-                card ? (card.getAttribute('data-job-raw') || card.getAttribute('data-job') || '') : '',
+                card ? (card.getAttribute('data-specialty') || card.getAttribute('data-job-raw') || card.getAttribute('data-job') || '') : '',
                 card ? (card.getAttribute('data-name-raw') || card.getAttribute('data-name') || '') : '',
                 numPrice,
-                card ? (card.getAttribute('data-name') || '') : ''
+                card ? (card.getAttribute('data-name') || '') : '',
+                card ? (card.getAttribute('data-city') || '') : ''
             );
             return;
         }
@@ -1316,6 +1512,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 pendingProviderDisplayName = '';
                 pendingProviderPrice = null;
                 pendingProviderBaseService = '';
+                populateBookingProviders(bookingServiceSelect ? bookingServiceSelect.value : '', '');
                 updateBookingPriceDisplay();
 
                 if (getToken() && typeof loadWorkspaceProfile === 'function') {
@@ -1348,7 +1545,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const authTabBtns = document.querySelectorAll('.auth-tab-btn');
     const authTabContents = document.querySelectorAll('.auth-tab-content');
 
-    function openAuthModal(tabName = 'tab-login') {
+    function openAuthModal(tabName = 'tab-login', defaultAccountType = '') {
         authTabBtns.forEach(b => {
             const isActive = b.getAttribute('data-tab') === tabName;
             b.classList.toggle('active', isActive);
@@ -1357,18 +1554,24 @@ document.addEventListener('DOMContentLoaded', () => {
         authTabContents.forEach(c => {
             c.classList.toggle('active', c.id === tabName);
         });
+        if (defaultAccountType && regAccountType) {
+            regAccountType.value = defaultAccountType;
+        }
+        if (typeof syncRegProviderFields === 'function') {
+            syncRegProviderFields();
+        }
         openModal('modal-auth');
     }
 
     if (openLoginBtn) openLoginBtn.addEventListener('click', () => openAuthModal('tab-login'));
-    if (openRegisterBtn) openRegisterBtn.addEventListener('click', () => openAuthModal('tab-register'));
-    if (heroJoinBtn) heroJoinBtn.addEventListener('click', () => openAuthModal('tab-register'));
-    if (ctaJoinBtn) ctaJoinBtn.addEventListener('click', () => openAuthModal('tab-register'));
+    if (openRegisterBtn) openRegisterBtn.addEventListener('click', () => openAuthModal('tab-register', 'provider'));
+    if (heroJoinBtn) heroJoinBtn.addEventListener('click', () => openAuthModal('tab-register', 'provider'));
+    if (ctaJoinBtn) ctaJoinBtn.addEventListener('click', () => openAuthModal('tab-register', 'provider'));
 
     const mobileLoginBtn = document.getElementById('mobile-login-btn');
     const mobileRegisterBtn = document.getElementById('mobile-register-btn');
     if (mobileLoginBtn) mobileLoginBtn.addEventListener('click', () => { toggleMobileMenu(false); openAuthModal('tab-login'); });
-    if (mobileRegisterBtn) mobileRegisterBtn.addEventListener('click', () => { toggleMobileMenu(false); openAuthModal('tab-register'); });
+    if (mobileRegisterBtn) mobileRegisterBtn.addEventListener('click', () => { toggleMobileMenu(false); openAuthModal('tab-register', 'provider'); });
 
     authTabBtns.forEach(btn => {
         btn.addEventListener('click', () => {
@@ -1463,6 +1666,18 @@ document.addEventListener('DOMContentLoaded', () => {
         demoProviderBtn.addEventListener('click', () => performQuickDemoLogin('pro@fixora.eg', '123456', demoProviderBtn));
     }
 
+    const regAccountType = document.getElementById('reg-account-type');
+    const regProviderFields = document.getElementById('reg-provider-fields');
+    function syncRegProviderFields() {
+        if (!regAccountType || !regProviderFields) return;
+        const isPro = regAccountType.value === 'provider';
+        regProviderFields.classList.toggle('hidden', !isPro);
+    }
+    if (regAccountType) {
+        regAccountType.addEventListener('change', syncRegProviderFields);
+        syncRegProviderFields();
+    }
+
     const registerForm = document.getElementById('register-form');
     if (registerForm) {
         registerForm.addEventListener('submit', async (e) => {
@@ -1476,6 +1691,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const type = document.getElementById('reg-account-type').value;
             const isProvider = type === 'provider';
+            const regSpecialty = document.getElementById('reg-specialty') ? document.getElementById('reg-specialty').value : '';
+            const regJobTitle = document.getElementById('reg-job-title') ? document.getElementById('reg-job-title').value.trim() : '';
 
             try {
                 const data = await api('/auth/register', {
@@ -1487,7 +1704,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         password: document.getElementById('reg-password').value,
                         role: isProvider ? 'PROVIDER' : 'CLIENT',
                         city: document.getElementById('reg-city') ? document.getElementById('reg-city').value : null,
-                        jobTitle: isProvider ? 'فني صيانة منزلية' : undefined
+                        specialty: isProvider ? regSpecialty : undefined,
+                        jobTitle: isProvider ? (regJobTitle || regSpecialty || 'فني صيانة منزلية') : undefined
                     }
                 });
 
@@ -1496,7 +1714,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 closeModal('modal-auth');
                 registerForm.reset();
                 populateGovernorateSelects();
+                populateSpecialtySelects();
+                syncRegProviderFields();
                 enterWorkspace({ refresh: true });
+                if (isProvider) loadProviders();
 
                 if (isProvider) {
                     showToast(
@@ -1790,15 +2011,24 @@ document.addEventListener('DOMContentLoaded', () => {
         const stats = (profileData && profileData.stats) || {};
         const currency = t('booking.price_currency');
 
+        const providerSpec = user.specialty || getProviderSpecKey(user) || 'صيانة منزلية شاملة';
+        const localizedProviderInfo = I18N ? I18N.translateProvider(user, currentLang) : user;
+        const specDisplay = translateSpecialtyLabel(providerSpec);
+
         const avatarEl = document.getElementById('ws-pro-avatar');
         const jobMetaEl = document.getElementById('ws-pro-job-meta');
         const cityMetaEl = document.getElementById('ws-pro-city-meta');
         const greetEl = document.getElementById('ws-pro-greeting');
-        if (avatarEl) avatarEl.textContent = String(user.fullname || 'P').trim().charAt(0).toUpperCase() || 'P';
-        if (jobMetaEl) jobMetaEl.textContent = user.jobTitle || (currentLang === 'en' ? 'Certified Technician' : 'فني صيانة معتمد');
+        const specBadgeEl = document.getElementById('ws-pro-feed-specialty-badge');
+        const displayProName = localizedProviderInfo.fullname || user.fullname || 'P';
+        if (avatarEl) avatarEl.textContent = String(displayProName).trim().charAt(0).toUpperCase() || 'P';
+        if (jobMetaEl) jobMetaEl.textContent = localizedProviderInfo.jobTitle || specDisplay || (currentLang === 'en' ? 'Certified Technician' : 'فني صيانة معتمد');
         if (cityMetaEl) cityMetaEl.textContent = I18N ? I18N.translateCity(user.city || 'القاهرة', currentLang) : (user.city || 'القاهرة');
         if (greetEl) {
-            greetEl.textContent = currentLang === 'en' ? `Pro Workspace — ${user.fullname}` : `لوحة الفني — ${user.fullname}`;
+            greetEl.textContent = currentLang === 'en' ? `Pro Workspace — ${localizedProviderInfo.fullname || user.fullname}` : `لوحة الفني — ${user.fullname}`;
+        }
+        if (specBadgeEl) {
+            specBadgeEl.innerHTML = `<i class="fa-solid fa-filter" aria-hidden="true"></i> <span>${escapeHtml(t('ws.pro_specialty_badge_prefix'))} <strong>${escapeHtml(specDisplay)}</strong></span>`;
         }
 
         const availBtn = document.getElementById('ws-pro-avail-btn');
@@ -1932,6 +2162,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Provider Settings Form & Live Governorate Rate Chips
         const fnEl = document.getElementById('ws-pro-fullname');
         const phEl = document.getElementById('ws-pro-phone');
+        const specEl = document.getElementById('ws-pro-specialty');
         const jobEl = document.getElementById('ws-pro-job');
         const ctEl = document.getElementById('ws-pro-city');
         const prEl = document.getElementById('ws-pro-price');
@@ -1941,6 +2172,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (fnEl) fnEl.value = user.fullname || '';
         if (phEl) phEl.value = user.phone || '';
+        if (specEl && providerSpec && Array.from(specEl.options).some((o) => o.value === providerSpec)) {
+            specEl.value = providerSpec;
+        }
         if (jobEl) jobEl.value = user.jobTitle || '';
         if (ctEl && user.city) ctEl.value = user.city;
         if (prEl) prEl.value = user.servicePrice || 200;
@@ -2240,9 +2474,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 saveBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> ${escapeHtml(t('userprof.saving'))}`;
             }
             try {
+                const specInputEl = document.getElementById('ws-pro-specialty');
                 const payload = {
                     fullname: document.getElementById('ws-pro-fullname').value.trim(),
                     phone: document.getElementById('ws-pro-phone').value.trim(),
+                    specialty: specInputEl ? specInputEl.value : undefined,
                     jobTitle: document.getElementById('ws-pro-job').value.trim(),
                     city: document.getElementById('ws-pro-city').value,
                     servicePrice: Number(document.getElementById('ws-pro-price').value) || 200,
@@ -2529,6 +2765,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentModalProviderName = '';
     let currentModalProviderDisplayName = '';
     let currentModalProviderJob = '';
+    let currentModalProviderSpecialty = '';
+    let currentModalProviderCity = '';
     let currentModalProviderPrice = null;
 
     function openProfileFromCard(card) {
@@ -2538,6 +2776,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const rawName = card.getAttribute('data-name-raw') || name;
         const job = card.getAttribute('data-job') || (currentLang === 'en' ? 'General Maintenance' : 'صيانة عامة');
         const rawJob = card.getAttribute('data-job-raw') || job;
+        const spec = card.getAttribute('data-specialty') || resolveSpecialtyKey(rawJob);
+        const rawCity = card.getAttribute('data-city') || '';
         const rate = card.getAttribute('data-rate') || '4.9';
         const reviews = card.getAttribute('data-reviews') || '300';
         const img = card.getAttribute('data-img') || 'images/provider-1.webp';
@@ -2558,6 +2798,8 @@ document.addEventListener('DOMContentLoaded', () => {
         currentModalProviderName = rawName;
         currentModalProviderDisplayName = name;
         currentModalProviderJob = rawJob;
+        currentModalProviderSpecialty = spec;
+        currentModalProviderCity = rawCity;
         currentModalProviderPrice = priceNum;
 
         document.getElementById('prof-modal-img').src = img;
@@ -2601,7 +2843,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (profBookDirectBtn) {
         profBookDirectBtn.addEventListener('click', () => {
             closeModal('modal-profile');
-            triggerBooking(currentModalProviderJob, currentModalProviderName, currentModalProviderPrice, currentModalProviderDisplayName);
+            triggerBooking(
+                currentModalProviderSpecialty || currentModalProviderJob,
+                currentModalProviderName,
+                currentModalProviderPrice,
+                currentModalProviderDisplayName,
+                currentModalProviderCity
+            );
         });
     }
 

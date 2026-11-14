@@ -1,6 +1,6 @@
 const express = require('express');
 const { db } = require('../db');
-const { normalizePhone, isValidPhone, isValidEmail, requireAuth, resolveBookingPrice } = require('../utils');
+const { normalizePhone, isValidPhone, isValidEmail, requireAuth, resolveBookingPrice, doesRequestMatchProvider } = require('../utils');
 
 const router = express.Router();
 
@@ -85,8 +85,9 @@ router.post('/', (req, res) => {
 router.get('/', requireAuth, (req, res) => {
   if (req.user.role === 'PROVIDER') {
     const availableRows = db
-      .prepare("SELECT * FROM service_requests WHERE status = 'NEW' AND provider_user_id IS NULL ORDER BY id DESC LIMIT 50")
-      .all();
+      .prepare("SELECT * FROM service_requests WHERE status = 'NEW' ORDER BY id DESC LIMIT 100")
+      .all()
+      .filter((row) => doesRequestMatchProvider(row, req.user));
     const assignedRows = db
       .prepare('SELECT * FROM service_requests WHERE provider_user_id = ? OR (provider_user_id IS NULL AND provider_name = ?) ORDER BY id DESC LIMIT 50')
       .all(req.user.id, req.user.fullname);
@@ -117,6 +118,9 @@ router.patch('/:id/accept', requireAuth, (req, res) => {
   }
   if (row.status !== 'NEW') {
     return res.status(400).json({ error: 'تم قبول هذا الطلب مسبقاً أو لم يعد متاحاً.' });
+  }
+  if (!doesRequestMatchProvider(row, req.user)) {
+    return res.status(403).json({ error: 'هذا الطلب يخص تخصصاً مختلفاً عن تخصصك المسجل.' });
   }
 
   db.prepare(
